@@ -16,7 +16,8 @@ class Hiera
           @host = 'puppetdb'
           @port = 443
         end
-        Hiera.debug("Hiera Pprofile backend starting")
+        Hiera.debug("Hiera Pprofile backend starting...")
+        Hiera.debug("Connecting to puppetdb server: #{@host}:#{@port}")
 
         @cache = cache || Filecache.new
       end
@@ -26,7 +27,7 @@ class Hiera
       # @param endpoint [Symbol] :resources, :facts or :nodes
       # @param query [Array] query to execute
       # @return [Array] the results of the query
-      def query(endpoint, query=nil, http=nil, version=:v2)
+      def query(endpoint, query=nil, http=nil, version=:v3)
         require 'json'
     
         unless http then
@@ -43,19 +44,25 @@ class Hiera
         return JSON.parse(resp.body)
       end
       
-      
+      def debugquery(query)
+        result = query(:resources,query)
+        Hiera.debug("Using puppetdb query: #{query.inspect}")
+        Hiera.debug("Received the following result from puppetdb query: #{result.inspect}")
+        return result
+      end
 
       def lookup(key, scope, order_override, resolution_type)
         answer = nil
 
         Hiera.debug("Looking up #{key} in Pprofile backend")
 
-        q = ['and', ['=', 'type', 'Class'], ['~', 'title','Profile'], ['=', 'certname',scope['clientcert']]]
+        roleq = ['and', ['=', 'type', 'Class'], ['~', 'title','Role::'], ['=', 'certname',scope['clientcert']]]
+        profileq = ['and', ['=', 'type', 'Class'], ['~', 'title','Profile::'], ['=', 'certname',scope['clientcert']]]
+        hierarchy = debugquery(roleq).collect { |x| x['title'].split('::').join('/').downcase }
+        hierarchy = hierarchy.concat(debugquery(profileq).collect { |x| x['title'].split('::').join('/').downcase })
         if Config.include?(:hierarchy)
-          hierarchy = [Config[:hierarchy]].flatten
+          hierarchy = hierarchy.concat([Config[:hierarchy]].flatten)
         end
-        result = query(:resources,q)
-        hierarchy = hierarchy.concat(result.collect { |x| x['title'].gsub(/Profile::/,'').downcase })
         Hiera.debug("Hierarchy: #{hierarchy.inspect}")
         Backend.datasources(scope, order_override,hierarchy) do |source|
           Hiera.debug("Looking for data source #{source}")

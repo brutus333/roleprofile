@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Hiera is a configuration data store with pluggable back ends; hiera-pprofile is a yaml backend that build a dynamic hierarchy based on the profile classed the node has assigned.
+Hiera is a configuration data store with pluggable back ends; hiera-roleprofile is a yaml backend that build a dynamic hierarchy based on the profile and role classes assigned to the node.
 
 The node-classes information is obtained with a puppetdb query.
 
@@ -14,26 +14,19 @@ The backend code is based on original yaml backend code and few lines of code fr
 
 Configuration
 =============
-Here is a sample hiera.yaml file that will work with hiera_pprofile
+Here is a sample hiera.yaml file that will work with hiera_roleprofile
 
 <pre>
 ---
     :backends:
-      - pprofile
+      - roleprofile
     :hierarchy:
       - defaults
-    #  - "%{clientcert}"
+      - "%{clientcert}"
       - "%{environment}"
       - global
     
-    :yaml:
-    # datadir is empty here, so hiera uses its defaults:
-    # - /var/lib/hiera on *nix
-    # - %CommonAppData%\PuppetLabs\hiera\var on Windows
-    # When specifying a datadir, make sure the directory exists.
-      :datadir: "/etc/puppet/hiera/%{environment}/hieradata"
-    
-    :pprofile:
+    :roleprofile:
     # datadir is empty here, so hiera uses its defaults:
     # - /var/lib/hiera on *nix
     # - %CommonAppData%\PuppetLabs\hiera\var on Windows
@@ -48,9 +41,9 @@ Here is a sample hiera.yaml file that will work with hiera_pprofile
 Limitations
 ============
 
-It is not possible at this moment to alterate the order of items in the hierarchy: right now, the hierarchy is constructed with items in configuration file, followed by dynamically generated profiles in literal order.
+It is not possible at this moment to alterate the order of items in the hierarchy: right now, the hierarchy is constructed with dynamically generated role yamls first (in /etc/puppet/hiera/%{environment}/hieradata/role dir), profile yamls (in /etc/puppet/hiera/%{environment}/hieradata/profile), followed by items in the standard hierarchy in the configuration file.
 
-The backend was not tested with remote puppetdb
+The backend was tested with remote puppetdb
 
 Contact
 =======
