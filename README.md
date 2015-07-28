@@ -37,6 +37,20 @@ Here is a sample hiera.yaml file that will work with hiera_roleprofile
 </pre>
 
 
+Example
+========
+
+If we have a node with the following puppet class attached via ENC: role::webserver and if the role::webserver class has the following code:
+
+<pre>
+class role::webserver {
+  include profile::apache
+  include profile::php
+  include profile::mysql
+}
+
+the dynamic generated hierarchy will be : ["role/webserver", "profile/apache", "profile/mysql", "profile/php", "defaults", "%{clientcert}", "%{environment}", "global"]
+
 
 Limitations
 ============
